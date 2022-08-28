@@ -3,10 +3,10 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 from functools import wraps
-
+from flask_cors import CORS
 
 app = Flask(__name__)
-
+CORS(app)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/PC4/Documents/projects/python/database.db'
@@ -91,7 +91,6 @@ def create_user():
     data = request.get_json()
 
     check_user = User.query.filter_by(username=data["username"]).first()
-    print(check_user)
     if check_user:
         return jsonify({"message": "this username already exist !"}), 402
 
