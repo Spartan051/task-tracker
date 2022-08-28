@@ -45,11 +45,7 @@ def token_required(f):
         if "Authorization" in request.headers:
             token = request.headers["Authorization"].split(" ")[1]
         if not token:
-            return {
-                "message": "Authentication Token is missing!",
-                "data": None,
-                "error": "Unauthorized"
-            }, 401
+            return jsonify({"message": "Authentication Token is missing!"}), 401
         try:
             data = jwt.decode(
                 token, app.config["SECRET_KEY"], algorithms=["HS256"])
@@ -68,10 +64,10 @@ def get_user_info():
     user = User.query.filter_by(username=data["username"]).first()
 
     if not user:
-        return jsonify({"message": "user not fownd !"})
+        return jsonify({"message": "user not fownd !"}), 402
 
     if not check_password_hash(user.password, data["password"]):
-        return jsonify({"message": "your password is wrong !"})
+        return jsonify({"message": "your password is wrong !"}), 403
 
     token = jwt.encode({
         "username": user.username
@@ -93,6 +89,15 @@ def get_user_info():
 @app.route("/api/register", methods=["POST"])
 def create_user():
     data = request.get_json()
+
+    check_user = User.query.filter_by(username=data["username"]).first()
+    print(check_user)
+    if check_user:
+        return jsonify({"message": "this username already exist !"}), 402
+
+    if data["password"] != data["confrimPassword"]:
+        return jsonify({"message": "Passwords do not match !"}), 403
+
     hashed_password = generate_password_hash(data["password"], method="sha256")
     new_user = User(username=data["username"], password=hashed_password,
                     email=data["email"], city=data["city"])
@@ -156,12 +161,12 @@ def create_log(user):
 @app.route("/api/log/<task_id>", methods=["GET"])
 @token_required
 def get_all_logs(user, task_id):
-    logs = Task.query.filter_by(task_id=task_id,)
+    logs = Log.query.filter_by(task_id=task_id,)
 
     outpot = []
     for log in logs:
         log_data = {}
-        log_data["date"] = log.name
+        log_data["date"] = log.date
         log_data["value"] = log.value
         log_data["notes"] = log.notes
 
